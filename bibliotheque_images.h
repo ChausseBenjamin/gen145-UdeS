@@ -12,6 +12,18 @@ Description: Solution de la problematique pour GEN145.
 #define BIBLIOTHEQUE_IMAGES_H
 
 #include <stdio.h>
+#include <string.h>
+
+// Permet une gestion facile des messages d'erreurs
+#define ERROR    0
+#define WARNING  1
+#define INFO     2
+#define DEBUG    3
+#define LOGLEVEL 3 // Change to make code execution more/less verbose
+
+// Facilite la lecture du code
+#define TRUE  1
+#define FALSE 0
 
 // Valeurs maximales pour les images
 #define MAX_LARGEUR 256
@@ -46,6 +58,11 @@ struct RGB
     int valeurG;
     int valeurB;
 };
+
+// Operation pour l'ecriture de messages d'erreurs
+void msg(int  warnLevel, // Type of message (INFO, WARNING or ERROR)
+         char txt[],     // Error message which is printed
+         int  err);      // Error code specified in the docs (only for Errors)
 
 // Operations pour les images noir et blanc
 int pgm_lire(char             nom_fichier[],

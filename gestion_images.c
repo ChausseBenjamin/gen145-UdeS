@@ -1,7 +1,7 @@
 /********
 Fichier: gestion_images.c
-Auteurs: Benjamin Chausse - chab1704
-         <++>
+Auteurs: Benjamin Chausse  - chab1704
+         Guillaume Malgorn - malg1503
 Date: 31 Octobre 2022
 Description: Fichier de distribution pour GEN145.
 ********/
@@ -14,8 +14,8 @@ int image2[MAX_HAUTEUR][MAX_LARGEUR];
 struct RGB imageRGB1[MAX_HAUTEUR][MAX_LARGEUR];
 struct RGB imageRGB2[MAX_HAUTEUR][MAX_LARGEUR];
 
-int main()
-{
+int main() {
+    int err = 0;
     int lignes1, colonnes1;
     int lignes2, colonnes2;
     int maxval;
@@ -23,29 +23,29 @@ int main()
     char nom[MAX_CHAINE];
     struct MetaData metadonnees;
 
-	int retour;
 
-    printf("-> Debut!\n");
+    msg(INFO,"Debut!",0);
+
+    // TODO: Remove this from production code
+    strcpy(nom,"img/cat.pgm");
 
 	// exemple d'appel de fonction
-    retour = pgm_lire(nom, image1,
+    err = pgm_lire(nom, image1,
                       &lignes1, &colonnes1,
                       &maxval, &metadonnees);
 
-	// exemple detraitement d'un code de retour (erreur ou reussite)
-	printf("-> Retour: ");
-	if (retour == OK)
-		printf("-> OK");
+	// exemple de traitement d'un code de retour (erreur ou reussite)
+	if (err == FALSE)
+		msg(INFO,"Aucune erreur.",OK);
 	else
-		printf("-> ERREUR");
-	printf("\n");
+		msg(ERROR,"Un problème est survenu",ERREUR_FICHIER);
 
 	// autre exemple d'appel de fonction
     pgm_ecrire(nom, image1,
                lignes1, colonnes1,
                maxval, metadonnees);
 
-    printf("-> Fin!\n");
+    msg(INFO,"Fin!",OK);
 
     return 0;
 }
