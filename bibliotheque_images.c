@@ -218,7 +218,7 @@ int pgm_creer_histogramme(int matrice[MAX_CHAINE][MAX_LARGEUR],
 
 int pgm_couleur_preponderante(int matrice[MAX_HAUTEUR][MAX_LARGEUR],
     int lignes, int colonnes){
-      
+
 char txt[145];
 	int histogram[MAX_VALEUR +1];
 	int b = 0;
@@ -273,8 +273,19 @@ int pgm_eclaircir_noircir(int matrice[MAX_HAUTEUR][MAX_LARGEUR],
 
 int pgm_creer_negatif(int matrice[MAX_HAUTEUR][MAX_LARGEUR],
     int lignes, int colonnes, int maxval){
-  return OK;
-}
+
+  	for (int i = 0; i < lignes; i++) {
+		for (int j = 0; j < colonnes; j++) {
+			matrice[i][j] = maxval - matrice[i][j];
+		}
+	}
+	
+	if (&matrice[lignes - 1][colonnes - 1] == NULL) 
+	{
+		return ERREUR;
+	}
+	return OK;
+    }
 
 int pgm_extraire(int matrice[MAX_HAUTEUR][MAX_LARGEUR],
                  int lignes1, int colonnes1,
