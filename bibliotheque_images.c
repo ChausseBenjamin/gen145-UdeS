@@ -7,7 +7,6 @@ Description: Fichier de distribution pour GEN145.
 ********/
 
 #include "bibliotheque_images.h"
-// Ceci est un test
 
 /****************************************************************************/
 /*                            General operations                            */
@@ -180,7 +179,7 @@ int pgm_copier(int matrice1[MAX_HAUTEUR][MAX_LARGEUR],
                int lignes1, int colonnes1,
                int matrice2[MAX_HAUTEUR][MAX_LARGEUR],
                int *p_lignes2, int *p_colonnes2){
-
+                
 	for(int i = 0; i<lignes1 ; i++)
 	{
 		for (int j = 0; j<colonnes1 ; j++)
@@ -190,7 +189,7 @@ int pgm_copier(int matrice1[MAX_HAUTEUR][MAX_LARGEUR],
 	}
 	if (&matrice2[lignes1 - 1][colonnes1 - 1] == NULL)
 	{
-		msg(ERROR,"La taille de la matrice est plus grande que prévu",ERREUR_TAILLE);
+		msg(ERROR,"La matrice n'a pas la bonne taille.",ERREUR_TAILLE);
 		return ERREUR_TAILLE;
 	}
 	*p_lignes2 = lignes1;
@@ -206,9 +205,9 @@ int pgm_creer_histogramme(int matrice[MAX_CHAINE][MAX_LARGEUR],
 	{
 		histogramme[i] =0;
 	}
-	for (int i = 0; i < lignes; i++)
+	for (int i = 0; i < lignes; i++)	
 	{
-		for (int j = 0; j < colonnes; j++)
+		for (int j = 0; j < colonnes; j++)	
 		{
 			a = matrice[i][j];
 			histogramme[a]++;
@@ -227,18 +226,18 @@ char txt[145];
 	{
 		histogram[i] =0;
 	}
-	for (int i = 0; i < lignes; i++)
+	for (int i = 0; i < lignes; i++)	
 	{
-		for (int j = 0; j < colonnes; j++)
+		for (int j = 0; j < colonnes; j++)	
 		{
 			b = matrice[i][j];
 			histogram[b]++;
 		}
 	}
-
+	
 	int frequence =0;
 	int couleur_preponderante = 0;
-
+	
 	for(int i=0; i<MAX_VALEUR + 1; i++)
 	{
 		if (histogram[i] > frequence)
@@ -299,7 +298,6 @@ int pgm_sont_identiques(int matrice1[MAX_HAUTEUR][MAX_LARGEUR],
                         int lignes1, int colonnes1,
                         int matrice2[MAX_HAUTEUR][MAX_LARGEUR],
                         int lignes2, int colonnes2){
-
   return OK;
 }
 
@@ -370,7 +368,7 @@ int ppm_copier(struct RGB matrice1[MAX_HAUTEUR][MAX_LARGEUR],
 			matrice2[i][j].valeurB = matrice1[i][j].valeurB;
 		}
 	}
-
+	
 	if (&matrice2[lignes1 - 2][colonnes1 - 2].valeurR == NULL || &matrice2[lignes1 - 2][colonnes1 - 2].valeurG == NULL || &matrice2[lignes1 - 2][colonnes1 - 2].valeurB == NULL) {
 		return ERREUR;
 	}
