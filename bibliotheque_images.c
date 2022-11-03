@@ -16,16 +16,18 @@ int PGMfunction = TRUE;
 
 void msg(int warnLevel,char txt[], int err){
   char levelName[4][8] = { "Error", "Warning", "Info", "Debug"};
-  if (LOGLEVEL >= warnLevel) {
-    for (int i=0;i<60;i++){
-      printf("-");
-    };
-    if (warnLevel == 0){
-      printf("\n%s %d: ",levelName[warnLevel],err);
-    } else {
-      printf("\n%s: ",levelName[warnLevel]);
+  if (LOGLEVEL!=0){
+    if (LOGLEVEL >= warnLevel) {
+      for (int i=0;i<60;i++){
+        printf("-");
+      };
+      if (warnLevel == 1){
+        printf("\n%s %d: ",levelName[warnLevel-1],err);
+      } else {
+        printf("\n%s: ",levelName[warnLevel-1]);
+      }
+      printf("%s\n",txt);
     }
-    printf("%s\n",txt);
   }
 }
 
@@ -185,6 +187,54 @@ int pgm_lire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
 int pgm_ecrire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
                int lignes, int colonnes,
                int maxval, struct MetaData metadonnees) {
+    char txt[MAX_CHAINE];
+    int metaContents = 0;
+    FILE *fp = fopen(nom_fichier, "w");
+    if (!fp) {
+      msg(ERROR,"Could not open the file for writing."
+                "Do you have the nessessary permissions?", ERREUR_FICHIER);
+      return ERREUR_FICHIER;
+    } else {
+      msg(INFO,"Successfully created and cleared the file.",OK);
+    }
+
+    metaContents += (strlen(metadonnees.auteur)       == 0 ) ? 1 : 0;
+    metaContents += (strlen(metadonnees.dateCreation) == 0 ) ? 1 : 0;
+    metaContents += (strlen(metadonnees.lieuCreation) == 0 ) ? 1 : 0;
+    
+    switch (metaContents){
+      case 3:
+        fprintf(fp,"#%s;%s;%s\n",metadonnees.auteur,metadonnees.dateCreation,metadonnees.lieuCreation);
+      case 2:
+        msg(ERROR,"Incomplete metadata information given.",ERREUR_FORMAT);
+        return ERREUR_FORMAT;
+      default:
+        msg(INFO,"No metadata information was given.",OK);
+    }
+
+    fprintf(fp,"P2\n");
+
+    if (lignes>MAX_HAUTEUR || colonnes>MAX_LARGEUR){
+      msg(ERROR,"Dimensions exceed maximum allowed value",ERREUR_TAILLE);
+      return ERREUR_TAILLE;
+    } else {
+      fprintf(fp,"%d %d\n",colonnes,lignes);
+    }
+
+    if (maxval>MAX_VALEUR){
+      msg(ERROR,"Tone depth exceeds what is allowed by the format.",ERREUR);
+      return ERREUR;
+    } else {
+      fprintf(fp,"%d\n",maxval);
+    }
+
+    for (int w=0;w<MAX_LARGEUR;w++){
+      for (int h=0;h<MAX_HAUTEUR;h++){
+        fprintf(fp,"%d ",matrice[h][w]);
+      }
+    }
+    fclose(fp);
+
     return OK;
 }
 

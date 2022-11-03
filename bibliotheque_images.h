@@ -15,10 +15,10 @@ Description: Solution de la problematique pour GEN145.
 #include <string.h>
 
 // Permet une gestion facile des messages d'erreurs
-#define ERROR    0
-#define WARNING  1
-#define INFO     2
-#define DEBUG    3
+#define ERROR    1
+#define WARNING  2
+#define INFO     3
+#define DEBUG    4
 #define LOGLEVEL 0 // Change to make code execution more/less verbose
 
 // Facilite la lecture du code
