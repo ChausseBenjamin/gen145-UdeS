@@ -162,7 +162,6 @@ int pgm_lire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
         pixelcount++;
       }
     }
-    char tmp[8];
     // TODO: Error Management...
     msg(INFO,"Successfully loaded the image into the matrix.",OK);
 		/* Close the file */
