@@ -178,19 +178,77 @@ int pgm_ecrire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
 int pgm_copier(int matrice1[MAX_HAUTEUR][MAX_LARGEUR],
                int lignes1, int colonnes1,
                int matrice2[MAX_HAUTEUR][MAX_LARGEUR],
-               int *lignes2, int *colonnes2){
+               int *p_lignes2, int *p_colonnes2){
+                
+	for(int i = 0; i<lignes1 ; i++)
+	{
+		for (int j = 0; j<colonnes1 ; j++)
+		{
+			matrice2[i][j] = matrice1[i][j];
+		}
+	}
+	if (&matrice2[lignes1 - 1][colonnes1 - 1] == NULL)
+	{
+		msg(ERROR,"La taille de la matrice est plus grande que prévu",ERREUR_TAILLE);
+		return ERREUR_TAILLE;
+	}
+	*p_lignes2 = lignes1;
+	*p_colonnes2 = colonnes1;
   return OK;
 }
 
 int pgm_creer_histogramme(int matrice[MAX_CHAINE][MAX_LARGEUR],
                           int lignes, int colonnes,
                           int histogramme[MAX_VALEUR+1]){
-  return OK;
+ int a = 0;
+	for (int i = 0; i < MAX_VALEUR + 1; i++)
+	{
+		histogramme[i] =0;
+	}
+	for (int i = 0; i < lignes; i++)	
+	{
+		for (int j = 0; j < colonnes; j++)	
+		{
+			a = matrice[i][j];
+			histogramme[a]++;
+		}
+	}
+	return OK;
 }
 
 int pgm_couleur_preponderante(int matrice[MAX_HAUTEUR][MAX_LARGEUR],
     int lignes, int colonnes){
-  return OK;
+      
+char txt[145];
+	int histogram[MAX_VALEUR +1];
+	int b = 0;
+	for (int i = 0; i < MAX_VALEUR + 1; i++)
+	{
+		histogram[i] =0;
+	}
+	for (int i = 0; i < lignes; i++)	
+	{
+		for (int j = 0; j < colonnes; j++)	
+		{
+			b = matrice[i][j];
+			histogram[b]++;
+		}
+	}
+	
+	int frequence =0;
+	int couleur_preponderante = 0;
+	
+	for(int i=0; i<MAX_VALEUR + 1; i++)
+	{
+		if (histogram[i] > frequence)
+		{
+			frequence = histogram[i];
+			couleur_preponderante = i;
+		}
+	}
+	sprintf(txt,"La couleur preponderante dans cette image est : %d\n", couleur_preponderante);
+	msg(INFO,txt,OK);
+	return OK;
 }
 
 int pgm_eclaircir_noircir(int matrice[MAX_HAUTEUR][MAX_LARGEUR],
@@ -290,7 +348,21 @@ int ppm_ecrire(char nom_fichier[],
 int ppm_copier(struct RGB matrice1[MAX_HAUTEUR][MAX_LARGEUR],
                int lignes1, int colonnes1,
                struct RGB matrice2[MAX_HAUTEUR][MAX_LARGEUR],
-               int *lignes2, int *colonnes2){
+               int *p_lignes2, int *p_colonnes2){
+
+  for (int i = 0; i < lignes1; i++) {
+		for (int j = 0; j < colonnes1; j++) {
+			matrice2[i][j].valeurR = matrice1[i][j].valeurR;
+			matrice2[i][j].valeurG = matrice1[i][j].valeurG;
+			matrice2[i][j].valeurB = matrice1[i][j].valeurB;
+		}
+	}
+	
+	if (&matrice2[lignes1 - 2][colonnes1 - 2].valeurR == NULL || &matrice2[lignes1 - 2][colonnes1 - 2].valeurG == NULL || &matrice2[lignes1 - 2][colonnes1 - 2].valeurB == NULL) {
+		return ERREUR;
+	}
+	* p_lignes2 = lignes1;
+	* p_colonnes2 = colonnes1;
   return OK;
 }
 
