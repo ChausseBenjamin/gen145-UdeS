@@ -8,6 +8,9 @@ Description: Fichier de distribution pour GEN145.
 
 #include "bibliotheque_images.h"
 
+/****************************************************************************/
+/*                            General operations                            */
+/****************************************************************************/
 
 void msg(int warnLevel,char txt[], int err){
   char levelName[4][8] = { "Error", "Warning", "Info", "Debug"};
@@ -24,6 +27,10 @@ void msg(int warnLevel,char txt[], int err){
   }
 }
 
+/****************************************************************************/
+/*                    Operation on grayscale images (pgm)                   */
+/****************************************************************************/
+
 int pgm_lire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
              int *p_lignes, int *p_colonnes,
              int *p_maxval, struct MetaData *p_metadonnees) {
@@ -33,6 +40,7 @@ int pgm_lire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
     char firstChar = {0};
     int filetype = 0;
     int tonedepth = 0;
+    int pixelcount = 0;
     char readline[MAX_CHAINE] = {0};
     char metadataAuthor[32] = {0};
     char metadataDate[11] = {0};
@@ -53,12 +61,12 @@ int pgm_lire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
     msg(INFO,"Looking for metadata information...",OK);
     firstChar = fgetc(fp);
     if (firstChar == '#'){
-      fscanf(fp,"%[a-z A-Z];%[0-9 -];%[a-z A-Z,]\n",
+      fscanf(fp,"%[a-z A-Z];%[0-9 -];%[a-z A-Z,0-9]\n",
                 metadataAuthor,
                 metadataDate,
                 metadataLocation);
 
-      int metaErrs[3];
+      int metaErrs[3]; // Metadata errors for three entries
       metaErrs[0] = (strlen(metadataAuthor)   == 0) ? 1 : 0;
       metaErrs[1] = (strlen(metadataDate)     == 0) ? 1 : 0;
       metaErrs[2] = (strlen(metadataLocation) == 0) ? 1 : 0;
@@ -121,7 +129,7 @@ int pgm_lire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
                 *p_lignes, *p_colonnes);
     msg(DEBUG,txt,OK);
     if (*p_lignes > MAX_HAUTEUR || *p_colonnes > MAX_LARGEUR) {
-      msg(ERROR,"Image height and/or exceeds maximum value.",ERREUR_TAILLE);
+      msg(ERROR,"Image height and/or width exceeds maximum value.",ERREUR_TAILLE);
       return ERREUR_TAILLE;
     } else {
       sprintf(txt,"Found that image resolution is %dx%d.",
@@ -143,8 +151,22 @@ int pgm_lire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
       msg(INFO,txt,OK);
     }
 
-
+    /* Load the pixels into the matrix */
+    msg(INFO,"Reading pixel data from file...",OK);
+    for (int h=0;h < *p_lignes;h++){
+      for (int w=0; w< *p_colonnes;w++){
+        if (!fscanf(fp,"%d",&matrice[h][w])){
+          msg(ERROR,"There was insuficient pixel data in the file.",ERREUR_TAILLE);
+          return ERREUR_TAILLE;
+        }
+        pixelcount++;
+      }
+    }
+    char tmp[8];
+    // TODO: Error Management...
+    msg(INFO,"Successfully loaded the image into the matrix.",OK);
 		/* Close the file */
+    fclose(fp);
     return OK;
 }
 
@@ -152,4 +174,135 @@ int pgm_ecrire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
                int lignes, int colonnes,
                int maxval, struct MetaData metadonnees) {
     return OK;
+}
+
+int pgm_copier(int matrice1[MAX_HAUTEUR][MAX_LARGEUR],
+               int lignes1, int colonnes1,
+               int matrice2[MAX_HAUTEUR][MAX_LARGEUR],
+               int *lignes2, int *colonnes2){
+  return OK;
+}
+
+int pgm_creer_histogramme(int matrice[MAX_CHAINE][MAX_LARGEUR],
+                          int lignes, int colonnes,
+                          int histogramme[MAX_VALEUR+1]){
+  return OK;
+}
+
+int pgm_couleur_preponderante(int matrice[MAX_HAUTEUR][MAX_LARGEUR],
+    int lignes, int colonnes){
+  return OK;
+}
+
+int pgm_eclaircir_noircir(int matrice[MAX_HAUTEUR][MAX_LARGEUR],
+    int lignes, int colonnes, int maxval, int valeur){
+  // TODO: Error management
+  int thresholdVal;
+  int mult;
+  int pixel;
+  // Threshold should be 0 when adding negative values
+  thresholdVal = (valeur < 0) ? 0 : maxval;
+  // Checking for overflow will be ( -1*pixel > 0 ) when adding negative values
+  mult = (valeur < 0) ? -1 : 1;
+  for (int h=0;h<lignes;h++){
+    for (int w=0;w<colonnes;w++){
+      pixel = matrice[h][w] + valeur;
+      // Assign the threshold value if the pixel overflows
+      matrice[h][w] = (mult*pixel>thresholdVal) ? thresholdVal : pixel;
+    }
+  }
+  return OK;
+}
+
+int pgm_creer_negatif(int matrice[MAX_HAUTEUR][MAX_LARGEUR],
+    int lignes, int colonnes, int maxval){
+  return OK;
+}
+
+int pgm_extraire(int matrice[MAX_HAUTEUR][MAX_LARGEUR],
+                 int lignes1, int colonnes1,
+                 int lignes2, int colonnes2,
+                 int *n_lignes, int *n_colonnes){
+  return OK;
+}
+
+int pgm_sont_identiques(int matrice1[MAX_HAUTEUR][MAX_LARGEUR],
+                        int lignes1, int colonnes1,
+                        int matrice2[MAX_HAUTEUR][MAX_LARGEUR],
+                        int lignes2, int colonnes2){
+  return OK;
+}
+
+int pgm_pivoter90(int matrice[MAX_HAUTEUR][MAX_LARGEUR],
+    int *p_lignes, int *p_colonnes, int sens){
+  int tmpMat[MAX_HAUTEUR][MAX_LARGEUR] = {0};
+  int matWidth = *p_colonnes;
+  int matHeight = *p_lignes;
+  /* Temporary matrix for rotation (prevents overwriting) */
+  switch (sens) {
+    case SENS_HORAIRE:
+      for (int h=0;h<matHeight;h++){
+        for (int w=0;h<matWidth;w++){
+          tmpMat[w][matHeight-h] = matrice[h][w];
+        }
+      }
+    case SENS_ANTIHORAIRE:
+      for (int h=0;h<matHeight;h++){
+        for (int w=0;h<matWidth;w++){
+          tmpMat[matWidth-w][h] = matrice[h][w];
+        }
+      }
+    default:
+      msg(ERROR,"Invalid rotation direction instruction.",ERREUR);
+      return ERREUR;
+  }
+  /* Invert dimension pointers */
+  *p_colonnes = matHeight;
+  *p_lignes = matWidth;
+  matWidth = *p_colonnes;
+  matHeight = *p_lignes;
+  /* Write data to original matrix */
+  for (int h=0;h<matHeight;h++){
+    for (int w=0;h<matWidth;w++){
+      matrice[h][w] = tmpMat[h][w];
+    }
+  }
+  return OK;
+}
+
+
+/****************************************************************************/
+/*                     Operations on color images (ppm)                     */
+/****************************************************************************/
+
+int ppm_lire(char nom_fichier[], struct RGB matrice[MAX_HAUTEUR][MAX_LARGEUR],
+             int *p_lignes,  int *p_colonnes,  int *p_maxval,
+             struct MetaData *metadonnees){
+  return OK;
+}
+
+int ppm_ecrire(char nom_fichier[],
+               struct RGB matrice[MAX_HAUTEUR][MAX_LARGEUR],
+               int lignes, int colonnes, int maxval,
+               struct MetaData metadonnees){
+  return OK;
+}
+
+int ppm_copier(struct RGB matrice1[MAX_HAUTEUR][MAX_LARGEUR],
+               int lignes1, int colonnes1,
+               struct RGB matrice2[MAX_HAUTEUR][MAX_LARGEUR],
+               int *lignes2, int *colonnes2){
+  return OK;
+}
+
+int ppm_sont_identiques(struct RGB matrice1[MAX_HAUTEUR][MAX_LARGEUR],
+                        int lignes1, int colonnes1,
+                        struct RGB matrice2[MAX_HAUTEUR][MAX_LARGEUR],
+                        int lignes2, int colonnes2){
+  return OK;
+}
+
+int ppm_pivoter90(struct RGB matrice[MAX_HAUTEUR][MAX_LARGEUR],
+    int *p_lignes,  int *p_colonnes, int sens){
+  return OK;
 }
