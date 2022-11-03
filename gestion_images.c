@@ -19,6 +19,23 @@ int main() {
 
   AutoValidation();
 
+  // void test_pgm_lire();
+  // void test_pgm_ecrire();
+  // void test_pgm_copier();
+  // void test_pgm_couleur_preponderante();
+  // void test_pgm_creer_histogramme();
+  // void test_pgm_eclaircir_noircir();
+  // void test_pgm_creer_negatif();
+  // void test_pgm_extraire();
+  // void test_pgm_sont_identiques();
+  // void test_pgm_pivoter90();
+
+  // void test_ppm_lire();
+  // void test_ppm_ecrire();
+  // void test_ppm_copier();
+  // void test_ppm_sont_identiques();
+  // void test_ppm_pivoter90();
+
     /* int err = 0; */
     /* int lignes1, colonnes1; */
     /* int lignes2, colonnes2; */

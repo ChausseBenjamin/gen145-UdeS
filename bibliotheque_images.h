@@ -19,7 +19,7 @@ Description: Solution de la problematique pour GEN145.
 #define WARNING  1
 #define INFO     2
 #define DEBUG    3
-#define LOGLEVEL 3 // Change to make code execution more/less verbose
+#define LOGLEVEL 0 // Change to make code execution more/less verbose
 
 // Facilite la lecture du code
 #define TRUE  1

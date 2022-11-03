@@ -7,7 +7,8 @@ Description: Fichier de distribution pour GEN145.
 ********/
 
 #include "bibliotheque_images.h"
-// Ceci est un test
+
+int PGMfunction = TRUE;
 
 /****************************************************************************/
 /*                            General operations                            */
@@ -43,6 +44,7 @@ int pgm_lire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
     int tonedepth = 0;
     int pixelcount = 0;
     char readline[MAX_CHAINE] = {0};
+    int  metadata = FALSE;
     char metadataAuthor[32] = {0};
     char metadataDate[11] = {0};
     char metadataLocation[32] = {0};
@@ -62,6 +64,7 @@ int pgm_lire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
     msg(INFO,"Looking for metadata information...",OK);
     firstChar = fgetc(fp);
     if (firstChar == '#'){
+      metadata = TRUE;
       fscanf(fp,"%[a-z A-Z];%[0-9 -];%[a-z A-Z,0-9]\n",
                 metadataAuthor,
                 metadataDate,
@@ -111,14 +114,23 @@ int pgm_lire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
 
 		/* Check if filetype ppm or pgm */
     msg(INFO,"Verifying file format...",OK);
-    fscanf(fp,"P%d", &filetype);
+    if (metadata) {
+      fscanf(fp,"P%d", &filetype);
+    } else {
+      fscanf(fp, "%d", &filetype);
+    }
     sprintf(txt,"Detected filetype is %d",filetype);
     msg(DEBUG,txt,OK);
-    if (filetype != 2) {
-      msg(ERROR,"Given file does not have a pgm filetype.",ERREUR_FORMAT);
-      return ERREUR_FORMAT;
+    // What to do for pgm functions
+    if (PGMfunction) {
+      if (filetype != 2) {
+        msg(ERROR,"Given file does not have a pgm filetype.",ERREUR_FORMAT);
+        return ERREUR_FORMAT;
+      } else {
+        msg(INFO,"File format is pgm (P2) as required.",OK);
+      }
     } else {
-      msg(INFO,"File format is pgm (P2) as required.",OK);
+      // TODO: Do ppm stuff
     }
 
 		/* Check file dimensions */
@@ -304,38 +316,41 @@ int pgm_sont_identiques(int matrice1[MAX_HAUTEUR][MAX_LARGEUR],
 
 int pgm_pivoter90(int matrice[MAX_HAUTEUR][MAX_LARGEUR],
     int *p_lignes, int *p_colonnes, int sens){
-  int tmpMat[MAX_HAUTEUR][MAX_LARGEUR] = {0};
-  int matWidth = *p_colonnes;
-  int matHeight = *p_lignes;
-  /* Temporary matrix for rotation (prevents overwriting) */
-  switch (sens) {
-    case SENS_HORAIRE:
-      for (int h=0;h<matHeight;h++){
-        for (int w=0;h<matWidth;w++){
-          tmpMat[w][matHeight-h] = matrice[h][w];
-        }
-      }
-    case SENS_ANTIHORAIRE:
-      for (int h=0;h<matHeight;h++){
-        for (int w=0;h<matWidth;w++){
-          tmpMat[matWidth-w][h] = matrice[h][w];
-        }
-      }
-    default:
-      msg(ERROR,"Invalid rotation direction instruction.",ERREUR);
-      return ERREUR;
-  }
+  // char txt[145];
+  // int matWidth = *p_colonnes;
+  // int matHeight = *p_lignes;
+  // sprintf(txt,"matWidth: %d matHeight: %d\n",matWidth,matHeight);
+  // msg(INFO,txt,OK);
+  // /* Temporary matrix for rotation (prevents overwriting) */
+  // int tmpMat[MAX_HAUTEUR][MAX_LARGEUR] = {0};
+  // /* Write data to a temporary matrix */
+  // for (int h=0;h<matHeight;h++){
+    // for (int w=0;h<matWidth;w++){
+      // matrice[h][w] = tmpMat[h][w];
+    // }
+  // }
+  // switch (sens) {
+    // case SENS_HORAIRE:
+      // for (int h=0;h<matHeight;h++){
+        // for (int w=0;h<matWidth;w++){
+          // matrice[w][matHeight-h] = tmpMat[h][w];
+        // }
+      // }
+    // case SENS_ANTIHORAIRE:
+      // for (int h=0;h<matHeight;h++){
+        // for (int w=0;h<matWidth;w++){
+          // matrice[matWidth-w][h] = tmpMat[h][w];
+        // }
+      // }
+    // default:
+      // msg(ERROR,"Invalid rotation direction instruction.",ERREUR);
+      // return ERREUR;
+  // }
   /* Invert dimension pointers */
-  *p_colonnes = matHeight;
-  *p_lignes = matWidth;
-  matWidth = *p_colonnes;
-  matHeight = *p_lignes;
-  /* Write data to original matrix */
-  for (int h=0;h<matHeight;h++){
-    for (int w=0;h<matWidth;w++){
-      matrice[h][w] = tmpMat[h][w];
-    }
-  }
+  // *p_colonnes = matHeight;
+  // *p_lignes = matWidth;
+  // matWidth = *p_colonnes;
+  // matHeight = *p_lignes;
   return OK;
 }
 
