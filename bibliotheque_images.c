@@ -248,7 +248,7 @@ char txt[145];
 	}
 	sprintf(txt,"La couleur preponderante dans cette image est : %d\n", couleur_preponderante);
 	msg(INFO,txt,OK);
-	return OK;
+	return couleur_preponderante;
 }
 
 int pgm_eclaircir_noircir(int matrice[MAX_HAUTEUR][MAX_LARGEUR],
