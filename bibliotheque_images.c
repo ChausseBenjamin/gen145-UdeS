@@ -71,9 +71,9 @@ int pgm_lire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
                 metadataLocation);
 
       int metaErrs[3]; // Metadata errors for three entries
-      metaErrs[0] = (strlen(metadataAuthor)   == 0) ? 1 : 0;
-      metaErrs[1] = (strlen(metadataDate)     == 0) ? 1 : 0;
-      metaErrs[2] = (strlen(metadataLocation) == 0) ? 1 : 0;
+      metaErrs[0] = (strlen(metadataAuthor)   == 0) ? TRUE : FALSE;
+      metaErrs[1] = (strlen(metadataDate)     == 0) ? TRUE : FALSE;
+      metaErrs[2] = (strlen(metadataLocation) == 0) ? TRUE : FALSE;
 
       sprintf(txt, "Metadata error array -> "
                    "{%d:%d:%d}",
@@ -192,12 +192,13 @@ int pgm_ecrire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
       msg(INFO,"Successfully created and cleared the file.",OK);
     }
 
-    metaContents += (strlen(metadonnees.auteur)       == 0 ) ? 1 : 0;
-    metaContents += (strlen(metadonnees.dateCreation) == 0 ) ? 1 : 0;
-    metaContents += (strlen(metadonnees.lieuCreation) == 0 ) ? 1 : 0;
+    metaContents += (strlen(metadonnees.auteur)       > 0 ) ? TRUE : FALSE;
+    metaContents += (strlen(metadonnees.dateCreation) > 0 ) ? TRUE : FALSE;
+    metaContents += (strlen(metadonnees.lieuCreation) > 0 ) ? TRUE : FALSE;
     
     switch (metaContents){
       case 3:
+        msg(INFO,"Writing metadata to file...",OK);
         fprintf(fp,"#%s;%s;%s\n",metadonnees.auteur,metadonnees.dateCreation,metadonnees.lieuCreation);
       case 2:
         msg(ERROR,"Incomplete metadata information given.",ERREUR_FORMAT);
@@ -536,8 +537,16 @@ int ppm_lire(char nom_fichier[], struct RGB matrice[MAX_HAUTEUR][MAX_LARGEUR],
   }
 
   /* Read pixel rbg values and save them in the RGB matrix */
-
-
+  msg(INFO,"Reading pixel values...",OK);
+  for (int i = 0; i < *p_lignes; i++) {
+    for (int j = 0; j < *p_colonnes; j++) {
+      fscanf(fp,"%d %d %d",
+             &matrice[i][j].valeurR,
+             &matrice[i][j].valeurG,
+             &matrice[i][j].valeurB);
+      pixelcount++;
+    }
+  }
 
   return OK;
 }
@@ -546,6 +555,85 @@ int ppm_ecrire(char nom_fichier[],
                struct RGB matrice[MAX_HAUTEUR][MAX_LARGEUR],
                int lignes, int colonnes, int maxval,
                struct MetaData metadonnees){
+  char txt[145];
+
+  // check if there is working metadata
+  int metadata = 0;
+  metadata += (strlen(metadonnees.auteur) > 0) ? TRUE : FALSE;
+  metadata += (strlen(metadonnees.dateCreation) > 0) ? TRUE : FALSE;
+  metadata += (strlen(metadonnees.lieuCreation) > 0) ? TRUE : FALSE;
+
+  switch (metadata){
+    case 0:
+      msg(INFO,"No metadata to write.",OK);
+      break;
+    case 3:
+      msg(INFO,"All metadata fields are filled.",OK);
+      break;
+    default:
+      msg(ERROR,"Metadata error.",ERREUR);
+      return ERREUR;
+  }
+
+  // open file
+  FILE *fp = fopen(nom_fichier,"w");
+  if (fp == NULL) {
+    msg(ERROR,"Could not open file.",ERREUR_FICHIER);
+    return ERREUR_FICHIER;
+  }
+
+  // write metadata
+  if (metadata == 3) {
+    msg(INFO,"Writing metadata...",OK);
+    fprintf(fp,"#%s;%s;%s\n",
+            metadonnees.auteur,
+            metadonnees.dateCreation,
+            metadonnees.lieuCreation);
+  }
+
+  // write header
+  msg(INFO,"Writing header...",OK);
+  fprintf(fp,"P3\n");
+
+  // write dimensions
+  if (colonnes > MAX_LARGEUR || lignes > MAX_HAUTEUR) {
+    msg(ERROR,"Image dimensions exceed maximum value.",ERREUR_TAILLE);
+    return ERREUR_TAILLE;
+  } else {
+    sprintf(txt,"Image dimensions\n"
+                "\tHeight: %d\n"
+                "\tWidth: %d",
+                lignes, colonnes);
+    msg(DEBUG,txt,OK);
+  }
+  msg(INFO,"Writing image dimensions...",OK);
+  fprintf(fp,"%d %d\n",colonnes,lignes);
+
+  // write tone depth
+  if (maxval > MAX_VALEUR) {
+    msg(ERROR,"Tone depth resolution surpasses what the spec allows.",ERREUR_FORMAT);
+    return ERREUR_FORMAT;
+  } else {
+    sprintf(txt,"Tone depth is set to %d.",maxval);
+    msg(INFO,txt,OK);
+  }
+  fprintf(fp,"%d\n",maxval);
+
+  // write pixel values
+  msg(INFO,"Writing pixel values...",OK);
+  for (int i = 0; i < lignes; i++) {
+    for (int j = 0; j < colonnes; j++) {
+      fprintf(fp,"%d %d %d ",
+              matrice[i][j].valeurR,
+              matrice[i][j].valeurG,
+              matrice[i][j].valeurB);
+    }
+    fprintf(fp,"\n");
+  }
+
+  // close the file
+  fclose(fp);
+
   return OK;
 }
 
@@ -565,8 +653,8 @@ int ppm_copier(struct RGB matrice1[MAX_HAUTEUR][MAX_LARGEUR],
 	if (&matrice2[lignes1 - 2][colonnes1 - 2].valeurR == NULL || &matrice2[lignes1 - 2][colonnes1 - 2].valeurG == NULL || &matrice2[lignes1 - 2][colonnes1 - 2].valeurB == NULL) {
 		return ERREUR;
 	}
-	* p_lignes2 = lignes1;
-	* p_colonnes2 = colonnes1;
+	*p_lignes2 = lignes1;
+	*p_colonnes2 = colonnes1;
   return OK;
 }
 
