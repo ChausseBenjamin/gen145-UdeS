@@ -192,15 +192,14 @@ int pgm_ecrire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
       msg(INFO,"Successfully created and cleared the file.",OK);
     }
 
-    metaContents += (strlen(metadonnees.auteur)       > 0 ) ? TRUE : FALSE;
-    metaContents += (strlen(metadonnees.dateCreation) > 0 ) ? TRUE : FALSE;
-    metaContents += (strlen(metadonnees.lieuCreation) > 0 ) ? TRUE : FALSE;
+    metaContents += (strlen(metadonnees.auteur)       == 0 ) ? 1 : 0;
+    metaContents += (strlen(metadonnees.dateCreation) == 0 ) ? 1 : 0;
+    metaContents += (strlen(metadonnees.lieuCreation) == 0 ) ? 1 : 0;
     
     switch (metaContents){
       case 3:
-        msg(INFO,"Writing metadata to file...",OK);
         fprintf(fp,"#%s;%s;%s\n",metadonnees.auteur,metadonnees.dateCreation,metadonnees.lieuCreation);
-      case 2:
+      case 0:
         msg(ERROR,"Incomplete metadata information given.",ERREUR_FORMAT);
         return ERREUR_FORMAT;
       default:
@@ -227,11 +226,8 @@ int pgm_ecrire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
       for (int h=0;h<MAX_HAUTEUR;h++){
         fprintf(fp,"%d ",matrice[h][w]);
       }
-      fprintf(fp,"\n");
     }
     fclose(fp);
-
-    return OK;
 }
 
 int pgm_copier(int matrice1[MAX_HAUTEUR][MAX_LARGEUR],
@@ -350,6 +346,37 @@ int pgm_extraire(int matrice[MAX_HAUTEUR][MAX_LARGEUR],
                  int lignes1, int colonnes1,
                  int lignes2, int colonnes2,
                  int *n_lignes, int *n_colonnes){
+  // check if the dimensions are valid
+  if (lignes1 < lignes2 || colonnes1 < colonnes2){
+    msg(ERROR,"Dimensions are invalid.",ERREUR_TAILLE);
+    return ERREUR_TAILLE;
+  }
+  // check if matrix dimensions surpasses the maximum allowed
+  if (lignes1>MAX_HAUTEUR || colonnes1>MAX_LARGEUR){
+    msg(ERROR,"Dimensions exceed maximum allowed value",ERREUR_TAILLE);
+    return ERREUR_TAILLE;
+  }
+  // check if extracted region surpasses matrix dimensions
+  if (lignes2+*n_lignes>lignes1 || colonnes2+*n_colonnes>colonnes1){
+    msg(ERROR,"Selected area overflows the matrix boundaries",ERREUR_TAILLE);
+    return ERREUR_TAILLE;
+  }
+  // create a temporary matrix to duplicate the current one
+  int tempMat[MAX_HAUTEUR][MAX_LARGEUR];
+  for (int i=0;i<lignes1;i++){
+    for (int j=0;j<colonnes1;j++){
+      tempMat[i][j] = matrice[i][j];
+    }
+  }
+  // update matrix dimesions to match extracted region dimensions
+  *n_lignes = lignes2;
+  *n_colonnes = colonnes2;
+  // copy the selected region to the top right of the original matrix
+  for (int i=lignes1-1;i<lignes1-1+*n_lignes;i++){
+    for (int j=colonnes1-1;j<colonnes1-1+*n_colonnes;j++){
+      matrice[i][j] = tempMat[i-lignes2][j-colonnes2];
+    }
+  }
   return OK;
 }
 
@@ -357,7 +384,26 @@ int pgm_sont_identiques(int matrice1[MAX_HAUTEUR][MAX_LARGEUR],
                         int lignes1, int colonnes1,
                         int matrice2[MAX_HAUTEUR][MAX_LARGEUR],
                         int lignes2, int colonnes2){
-  return OK;
+  // check if the dimensions are the same
+  if (lignes1 != lignes2 || colonnes1 != colonnes2){
+    msg(ERROR,"The two images have different dimensions.",ERREUR_TAILLE);
+    return ERREUR_TAILLE;
+  }
+  // check if dimensions are within the limits
+  if (lignes1 > MAX_HAUTEUR || lignes2 > MAX_HAUTEUR ||
+      colonnes1 > MAX_LARGEUR || colonnes2 > MAX_LARGEUR){
+    msg(ERROR,"The dimensions of the images exceed the maximum allowed.",ERREUR_TAILLE);
+    return ERREUR_TAILLE;
+  }
+  // Check if the two images are identical
+  for (int h=0;h<lignes1;h++){
+    for (int w=0;w<colonnes1;w++){
+      if (matrice1[h][w] != matrice2[h][w]){
+        return DIFFERENTES;
+      }
+    }
+  }
+  return IDENTIQUES;
 }
 
 int pgm_pivoter90(int matrice[MAX_HAUTEUR][MAX_LARGEUR],
@@ -662,10 +708,72 @@ int ppm_sont_identiques(struct RGB matrice1[MAX_HAUTEUR][MAX_LARGEUR],
                         int lignes1, int colonnes1,
                         struct RGB matrice2[MAX_HAUTEUR][MAX_LARGEUR],
                         int lignes2, int colonnes2){
-  return OK;
+  int diff = 0;
+  // check if dimensions are the same
+  if (lignes1 != lignes2 || colonnes1 != colonnes2) {
+    msg(ERROR,"Images are not the same size.",ERREUR_TAILLE);
+    return ERREUR_TAILLE;
+  }
+  // check if dimensions are within the maximum
+  if (lignes1 > MAX_HAUTEUR || colonnes1 > MAX_LARGEUR) {
+    msg(ERROR,"Image dimensions exceed maximum value.",ERREUR_TAILLE);
+    return ERREUR_TAILLE;
+  } else if (lignes2 > MAX_HAUTEUR || colonnes2 > MAX_LARGEUR) {
+    msg(ERROR,"Image dimensions exceed maximum value.",ERREUR_TAILLE);
+    return ERREUR_TAILLE;
+  }
+
+  // check pixel by pixel if everything is the same
+  for (int i=0;i<lignes1;i++){
+    for (int j=0;j<colonnes1;j++){
+      diff = (matrice1[i][j].valeurR != matrice2[i][j].valeurR) ?  1 : diff;
+      diff = (matrice1[i][j].valeurG != matrice2[i][j].valeurG) ?  1 : diff;
+      diff = (matrice1[i][j].valeurB != matrice2[i][j].valeurB) ?  1 : diff;
+      if (diff != 0) {
+        msg(ERROR,"Images are not identical.",DIFFERENTES);
+        return DIFFERENTES;
+      }
+    }
+  }
+  return IDENTIQUES;
 }
 
 int ppm_pivoter90(struct RGB matrice[MAX_HAUTEUR][MAX_LARGEUR],
     int *p_lignes,  int *p_colonnes, int sens){
+  struct RGB matriceTemp[MAX_HAUTEUR][MAX_LARGEUR];
+  int matHeight = *p_lignes;
+  int matWidth = *p_colonnes;
+  *p_lignes = matWidth;
+  *p_colonnes = matHeight;
+  // Check if dimensions surpass maximum values
+  if (matHeight > MAX_HAUTEUR || matWidth > MAX_LARGEUR) {
+    msg(ERROR,"Image dimensions exceed maximum value.",ERREUR_TAILLE);
+    return ERREUR_TAILLE;
+  }
+  switch (sens){
+    case SENS_ANTIHORAIRE: // changes the original matrix
+      for (int i = 0; i < matHeight; i++) {
+        for (int j = 0; j < matWidth; j++) {
+          matrice[j][matHeight - i - 1].valeurR = matriceTemp[i][j].valeurR;
+          matrice[j][matHeight - i - 1].valeurG = matriceTemp[i][j].valeurG;
+          matrice[j][matHeight - i - 1].valeurB = matriceTemp[i][j].valeurB;
+        }
+      }
+      break;
+    case SENS_HORAIRE: // changes the original matrix
+      for (int i = 0; i < matHeight; i++) {
+        for (int j = 0; j < matWidth; j++) {
+          matrice[matWidth - j - 1][i].valeurR = matriceTemp[i][j].valeurR;
+          matrice[matWidth - j - 1][i].valeurG = matriceTemp[i][j].valeurG;
+          matrice[matWidth - j - 1][i].valeurB = matriceTemp[i][j].valeurB;
+        }
+      }
+      break;
+    default:
+      msg(ERROR,"Invalid rotation direction.",ERREUR);
+      return ERREUR;
+  }
+  
+
   return OK;
 }
