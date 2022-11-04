@@ -8,8 +8,6 @@ Description: Fichier de distribution pour GEN145.
 
 #include "bibliotheque_images.h"
 
-int PGMfunction = TRUE;
-
 /****************************************************************************/
 /*                            General operations                            */
 /****************************************************************************/
@@ -47,9 +45,9 @@ int pgm_lire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
     int pixelcount = 0;
     char readline[MAX_CHAINE] = {0};
     int  metadata = FALSE;
-    char metadataAuthor[32] = {0};
-    char metadataDate[11] = {0};
-    char metadataLocation[32] = {0};
+    char metadataAuthor[MAX_CHAINE] = {0};
+    char metadataDate[MAX_CHAINE] = {0};
+    char metadataLocation[MAX_CHAINE] = {0};
 
 		/* Open the file */
     msg(INFO,"Opening the file...",OK);
@@ -124,15 +122,11 @@ int pgm_lire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
     sprintf(txt,"Detected filetype is %d",filetype);
     msg(DEBUG,txt,OK);
     // What to do for pgm functions
-    if (PGMfunction) {
-      if (filetype != 2) {
-        msg(ERROR,"Given file does not have a pgm filetype.",ERREUR_FORMAT);
-        return ERREUR_FORMAT;
-      } else {
-        msg(INFO,"File format is pgm (P2) as required.",OK);
-      }
+    if (filetype != 2) {
+      msg(ERROR,"Given file does not have a pgm filetype.",ERREUR_FORMAT);
+      return ERREUR_FORMAT;
     } else {
-      // TODO: Do ppm stuff
+      msg(INFO,"File format is pgm (P2) as required.",OK);
     }
 
 		/* Check file dimensions */
@@ -232,6 +226,7 @@ int pgm_ecrire(char nom_fichier[], int matrice[MAX_HAUTEUR][MAX_LARGEUR],
       for (int h=0;h<MAX_HAUTEUR;h++){
         fprintf(fp,"%d ",matrice[h][w]);
       }
+      fprintf(fp,"\n");
     }
     fclose(fp);
 
@@ -366,36 +361,46 @@ int pgm_sont_identiques(int matrice1[MAX_HAUTEUR][MAX_LARGEUR],
 
 int pgm_pivoter90(int matrice[MAX_HAUTEUR][MAX_LARGEUR],
     int *p_lignes, int *p_colonnes, int sens){
-  // char txt[145];
-  // int matWidth = *p_colonnes;
-  // int matHeight = *p_lignes;
-  // sprintf(txt,"matWidth: %d matHeight: %d\n",matWidth,matHeight);
-  // msg(INFO,txt,OK);
-  // /* Temporary matrix for rotation (prevents overwriting) */
-  // int tmpMat[MAX_HAUTEUR][MAX_LARGEUR] = {0};
-  // /* Write data to a temporary matrix */
-  // for (int h=0;h<matHeight;h++){
-    // for (int w=0;h<matWidth;w++){
-      // matrice[h][w] = tmpMat[h][w];
-    // }
-  // }
-  // switch (sens) {
-    // case SENS_HORAIRE:
-      // for (int h=0;h<matHeight;h++){
-        // for (int w=0;h<matWidth;w++){
-          // matrice[w][matHeight-h] = tmpMat[h][w];
-        // }
-      // }
-    // case SENS_ANTIHORAIRE:
-      // for (int h=0;h<matHeight;h++){
-        // for (int w=0;h<matWidth;w++){
-          // matrice[matWidth-w][h] = tmpMat[h][w];
-        // }
-      // }
-    // default:
-      // msg(ERROR,"Invalid rotation direction instruction.",ERREUR);
-      // return ERREUR;
-  // }
+char txt[145];
+  
+  int trash;
+  int matWidth  = *p_colonnes;
+  int matHeight = *p_lignes;
+  *p_colonnes   = matHeight;
+  *p_lignes     = matWidth;
+  sprintf(txt,"matWidth: %d matHeight: %d",matWidth,matHeight);
+  msg(ERROR,txt,OK);
+  /* Temporary matrix for rotation (prevents overwriting) */
+  int tmpMat[MAX_HAUTEUR][MAX_LARGEUR];
+  /* Write data to a temporary matrix */
+  if (matWidth > MAX_LARGEUR || matHeight > MAX_LARGEUR){
+    msg(ERROR,"Matrix dimensions too large.",ERREUR_FORMAT);
+    return ERREUR_FORMAT;
+  } 
+  for (int h=0;h<matHeight;h++){
+    for (int w=0;w<matWidth;w++){
+      tmpMat[h][w] = matrice[h][w];
+    }
+  }
+  switch (sens) {
+    case SENS_HORAIRE: // rotates the matrix clockwise
+      for (int h=0;h<matHeight;h++){
+        for (int w=0;w<matWidth;w++){
+          matrice[w][matHeight-h-1] = tmpMat[h][w];
+        }
+      }
+      break;
+    case SENS_ANTIHORAIRE: // rotates the matrix counterclockwise
+      for (int h=0;h<matHeight;h++){
+        for (int w=0;w<matWidth;w++){
+          matrice[matWidth-w-1][h] = tmpMat[h][w];
+        }
+      }
+      break;
+    default:
+      msg(ERROR,"Invalid rotation direction instruction.",ERREUR);
+      return ERREUR;
+  }
   /* Invert dimension pointers */
   // *p_colonnes = matHeight;
   // *p_lignes = matWidth;
@@ -411,7 +416,129 @@ int pgm_pivoter90(int matrice[MAX_HAUTEUR][MAX_LARGEUR],
 
 int ppm_lire(char nom_fichier[], struct RGB matrice[MAX_HAUTEUR][MAX_LARGEUR],
              int *p_lignes,  int *p_colonnes,  int *p_maxval,
-             struct MetaData *metadonnees){
+             struct MetaData *p_metadonnees){
+  char txt[145];
+  char firstChar = {0};
+  int filetype = 0;
+  int tonedepth = 0;
+  int pixelcount = 0;
+  char readline[MAX_CHAINE] = {0};
+  int metadata = FALSE;
+  char metadataAuthor[MAX_CHAINE] = {0};
+  char metadataDate[MAX_CHAINE] = {0};
+  char metadataLocation[MAX_CHAINE] = {0};
+
+  /* Open the file */
+  FILE *fp = fopen(nom_fichier, "r");
+  if (!fp){
+    msg(ERROR,"Could not open file.",ERREUR_FICHIER);
+    return ERREUR_FICHIER;
+  } else {
+    msg(INFO,"File opened successfully.",OK);
+  }
+
+	/* Check and handle metadata */
+  msg(INFO,"Looking for metadata information...",OK);
+  firstChar = fgetc(fp);
+  if (firstChar == '#'){
+    metadata = TRUE;
+    fscanf(fp,"%[a-z A-Z];%[0-9 -];%[a-z A-Z,0-9]\n",
+              metadataAuthor,
+              metadataDate,
+              metadataLocation);
+
+    int metaErrs[3]; // Metadata errors for three entries
+    metaErrs[0] = (strlen(metadataAuthor)   == 0) ? 1 : 0;
+    metaErrs[1] = (strlen(metadataDate)     == 0) ? 1 : 0;
+    metaErrs[2] = (strlen(metadataLocation) == 0) ? 1 : 0;
+
+    sprintf(txt, "Metadata error array -> "
+                 "{%d:%d:%d}",
+                 metaErrs[0],
+                 metaErrs[1],
+                 metaErrs[2]);
+    msg(DEBUG,txt,OK);
+    sprintf(txt,"Detected metadata contents\n"
+                "\tAuthor:   %s\n" "\tDate:     %s\n"
+                "\tLocation: %s",
+                metadataAuthor,
+                metadataDate,
+                metadataLocation);
+    msg(DEBUG,txt,OK);
+    if (metaErrs[0]+metaErrs[1]+metaErrs[2]>0)
+      msg(WARNING,"One or more metadata fields"
+                  " could not be read properly.",OK);
+    else {
+      msg(INFO,"Successfully loaded metadata information.",OK);
+    }
+
+    strcpy(p_metadonnees->auteur, metadataAuthor);
+    strcpy(p_metadonnees->dateCreation, metadataDate);
+    strcpy(p_metadonnees->lieuCreation, metadataLocation);
+
+    sprintf(txt,"Contents of metadata struct\n"
+                "\tAuthor:   %s\n"
+                "\tDate:     %s\n"
+                "\tLocation: %s",
+                p_metadonnees->auteur,
+                p_metadonnees->dateCreation,
+                p_metadonnees->lieuCreation);
+    msg(DEBUG,txt,OK);
+  } else {
+    msg(INFO,"No metadata information present.",OK);
+  };
+
+	/* Check if filetype ppm or pgm */
+  msg(INFO,"Verifying file format...",OK);
+  if (metadata) {
+    fscanf(fp,"P%d", &filetype);
+  } else {
+    fscanf(fp, "%d", &filetype);
+  }
+  sprintf(txt,"Detected filetype is %d",filetype);
+  msg(DEBUG,txt,OK);
+  // What to do for pgm functions
+  if (filetype != 3) {
+    msg(ERROR,"Given file does not have a pgm filetype.",ERREUR_FORMAT);
+    return ERREUR_FORMAT;
+  } else {
+    msg(INFO,"File format is ppm (P3) as required.",OK);
+  }
+
+	/* Check file dimensions */
+  msg(INFO,"Verifying image dimensions...",OK);
+  fscanf(fp,"%d %d",p_colonnes,p_lignes);
+  sprintf(txt,"Image dimensions\n"
+              "\tHeight: %d\n"
+              "\tWidth: %d",
+              *p_lignes, *p_colonnes);
+  msg(DEBUG,txt,OK);
+  if (*p_lignes > MAX_HAUTEUR || *p_colonnes > MAX_LARGEUR) {
+    msg(ERROR,"Image height and/or width exceeds maximum value.",ERREUR_TAILLE);
+    return ERREUR_TAILLE;
+  } else {
+    sprintf(txt,"Found that image resolution is %dx%d.",
+                *p_colonnes, *p_lignes);
+    msg(INFO,txt,OK);
+  }
+
+	/* Check file tonedepth precision */
+  msg(INFO,"Verifying image tone depth...",OK);
+  fscanf(fp,"%d",&tonedepth);
+  sprintf(txt,"Read a tone depth value of %d.",tonedepth);
+  msg(DEBUG,txt,OK);
+  if (tonedepth > MAX_VALEUR) {
+    msg(ERROR,"Tone depth resolution surpasses what the spec allows.",ERREUR_FORMAT);
+    return ERREUR_FORMAT;
+  } else {
+    sprintf(txt,"Tone depth is set to %d.",tonedepth);
+    msg(INFO,txt,OK);
+  }
+
+  /* Read pixel rbg values and save them in the RGB matrix */
+
+
+
   return OK;
 }
 
