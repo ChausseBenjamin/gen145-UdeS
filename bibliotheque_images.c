@@ -410,7 +410,6 @@ int pgm_pivoter90(int matrice[MAX_HAUTEUR][MAX_LARGEUR],
     int *p_lignes, int *p_colonnes, int sens){
 char txt[145];
   
-  int trash;
   int matWidth  = *p_colonnes;
   int matHeight = *p_lignes;
   *p_colonnes   = matHeight;
@@ -448,11 +447,6 @@ char txt[145];
       msg(ERROR,"Invalid rotation direction instruction.",ERREUR);
       return ERREUR;
   }
-  /* Invert dimension pointers */
-  // *p_colonnes = matHeight;
-  // *p_lignes = matWidth;
-  // matWidth = *p_colonnes;
-  // matHeight = *p_lignes;
   return OK;
 }
 
@@ -741,17 +735,17 @@ int ppm_sont_identiques(struct RGB matrice1[MAX_HAUTEUR][MAX_LARGEUR],
 int ppm_pivoter90(struct RGB matrice[MAX_HAUTEUR][MAX_LARGEUR],
     int *p_lignes,  int *p_colonnes, int sens){
   struct RGB matriceTemp[MAX_HAUTEUR][MAX_LARGEUR];
-  int matHeight = *p_lignes;
   int matWidth = *p_colonnes;
-  *p_lignes = matWidth;
+  int matHeight = *p_lignes;
   *p_colonnes = matHeight;
+  *p_lignes = matWidth;
   // Check if dimensions surpass maximum values
   if (matHeight > MAX_HAUTEUR || matWidth > MAX_LARGEUR) {
-    msg(ERROR,"Image dimensions exceed maximum value.",ERREUR_TAILLE);
-    return ERREUR_TAILLE;
+    msg(ERROR,"Image dimensions exceed maximum value.",ERREUR_FORMAT);
+    return ERREUR_FORMAT;
   }
   switch (sens){
-    case SENS_ANTIHORAIRE: // changes the original matrix
+    case SENS_HORAIRE: // changes the original matrix
       for (int i = 0; i < matHeight; i++) {
         for (int j = 0; j < matWidth; j++) {
           matrice[j][matHeight - i - 1].valeurR = matriceTemp[i][j].valeurR;
@@ -760,7 +754,7 @@ int ppm_pivoter90(struct RGB matrice[MAX_HAUTEUR][MAX_LARGEUR],
         }
       }
       break;
-    case SENS_HORAIRE: // changes the original matrix
+    case SENS_ANTIHORAIRE: // changes the original matrix
       for (int i = 0; i < matHeight; i++) {
         for (int j = 0; j < matWidth; j++) {
           matrice[matWidth - j - 1][i].valeurR = matriceTemp[i][j].valeurR;
